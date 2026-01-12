@@ -50,6 +50,8 @@
 #include <esp_netif.h>
 #include <esp_log.h>
 
+#include <freertos/event_groups.h>
+
 #define PPP_IP_BIT (1 << 0)
 #define STA_IP_BIT (1 << 1)
 #define ETH_IP_BIT (1 << 2)
@@ -175,7 +177,6 @@ static void _handleIpEvent(void* handler_args, esp_event_base_t base, int32_t ev
     controller->triggerReconnect();
     break;
   }
-  case IP_EVENT_TX_RX:
   default: {
     break;
   }
