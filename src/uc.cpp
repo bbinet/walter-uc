@@ -325,6 +325,25 @@ void UnifiedController::disconnectUnselectedDrivers()
   }
 }
 
+void UnifiedController::disconnectAllDrivers()
+{
+  driver::Driver** current = _board_config->drivers;
+
+  while(current != nullptr && (*current) != nullptr) {
+    auto driver = *current;
+
+    if(driver->isConfigured()) {
+      bool success = driver->disconnect();
+      if(!success) {
+        ESP_LOGW(LOGTAG, "Couldn't disconnect driver %.*s",
+            (int) driver->name.size(), driver->name.data());
+      }
+    }
+
+    current++;
+  }
+}
+
 esp_err_t UnifiedController::registerEventHandler(driver::EventType event_id,
                                                   esp_event_handler_t event_handler,
                                                   void* event_handler_arg)
@@ -408,6 +427,16 @@ void UnifiedController::triggerReconnect()
   xTaskNotifyGive(_uc_task_handle);
 }
 
+void UnifiedController::pause()
+{
+  _paused = true;
+}
+
+void UnifiedController::unpause()
+{
+  _paused = false;
+}
+
 void UnifiedController::_ucTask(void* pvParameters)
 {
   UnifiedController* self = static_cast<UnifiedController*>(pvParameters);
@@ -418,8 +447,10 @@ void UnifiedController::_ucTask(void* pvParameters)
       continue;
     }
 
-    self->_sortDrivers();
-    self->connectBestDriver();
+    if (!self->_paused) {
+      self->_sortDrivers();
+      self->connectBestDriver();
+    }
 
     driver::Driver* drv = self->_selected_driver;
 

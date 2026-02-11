@@ -86,6 +86,10 @@ public:
 
   void disconnectUnselectedDrivers();
 
+  void disconnectAllDrivers();
+  void pause();
+  void unpause();
+
   /**
    * @brief this function registers an event handler to the unifiedController
    * event loop.
@@ -130,6 +134,7 @@ private:
   esp_event_loop_handle_t _event_loop = nullptr; /* eventLoop => nullptr, not initialized */
   static inline TaskHandle_t _uc_task_handle = nullptr;
   ReconnectTimer _reconnect_time = ReconnectTimer::None;
+  bool _paused = false;
   driver::Driver* _selected_driver = nullptr;
 };
 
