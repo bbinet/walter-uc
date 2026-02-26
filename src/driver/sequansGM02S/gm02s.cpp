@@ -185,9 +185,20 @@ bool gm02s::connect()
 bool gm02s::disconnect()
 {
   gm02sDce->set_mode(esp_modem::modem_mode::COMMAND_MODE);
-  if(gm02sDce->set_radio_state(0) == esp_modem::command_result::FAIL)
-    return false;
-  return true;
+  bool ret = (gm02sDce->set_radio_state(0) != esp_modem::command_result::FAIL);
+  if (!ret) {
+    ESP_LOGW(LOGTAG, "set_radio_state(0) failed during disconnect");
+  }
+
+  // Always clean up lwIP state, even if the AT command failed —
+  // skipping this would leave PPP timers dangling in next_timeout.
+  // Explicitly notify lwIP that the PPP interface went down.
+  // set_mode(COMMAND_MODE) does not reliably do this, leaving PPP
+  // timers dangling in next_timeout and causing a crash ~67s later.
+  esp_netif_action_disconnected(network_interface, nullptr, 0, nullptr);
+  esp_netif_action_stop(network_interface, nullptr, 0, nullptr);
+
+  return ret;
 }
 
 bool gm02s::isConfigured()
