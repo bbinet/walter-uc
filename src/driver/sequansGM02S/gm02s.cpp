@@ -177,7 +177,11 @@ bool gm02s::connect()
   //     ESP_LOGI(LOGTAG, "Network state: %d", state);
   // }
 
-  gm02sDce->set_mode(esp_modem::modem_mode::CMUX_MODE);
+  if(!gm02sDce->set_mode(esp_modem::modem_mode::CMUX_MODE)) {
+    ESP_LOGW(LOGTAG, "Failed to enter CMUX/PPP mode");
+    return false;
+  }
+  ppp_started = true;
 
   return true;
 }
@@ -190,13 +194,15 @@ bool gm02s::disconnect()
     ESP_LOGW(LOGTAG, "set_radio_state(0) failed during disconnect");
   }
 
-  // Always clean up lwIP state, even if the AT command failed —
-  // skipping this would leave PPP timers dangling in next_timeout.
-  // Explicitly notify lwIP that the PPP interface went down.
-  // set_mode(COMMAND_MODE) does not reliably do this, leaving PPP
-  // timers dangling in next_timeout and causing a crash ~67s later.
-  esp_netif_action_disconnected(network_interface, nullptr, 0, nullptr);
-  esp_netif_action_stop(network_interface, nullptr, 0, nullptr);
+  // Only clean up lwIP PPP state if PPP was actually started.
+  // Calling these on a never-started PPP netif creates dangling LCP TERM-REQ
+  // timers in sys_check_timeouts, which accumulate over many failed connect
+  // retries and eventually corrupt the MEMP_SYS_TIMEOUT pool.
+  if(ppp_started) {
+    esp_netif_action_disconnected(network_interface, nullptr, 0, nullptr);
+    esp_netif_action_stop(network_interface, nullptr, 0, nullptr);
+    ppp_started = false;
+  }
 
   return ret;
 }

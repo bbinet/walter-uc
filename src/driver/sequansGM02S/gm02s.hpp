@@ -203,6 +203,7 @@ private:
   bool _setupModemDCE();
 
   bool configured = false;
+  bool ppp_started = false;
 
   esp_modem::PdpContext pdpContext { "" };
   gm02sHardwareConfig hardwareConfig = {};
