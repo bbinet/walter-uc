@@ -174,6 +174,14 @@ public:
   esp_modem::command_result waitForConnection();
 
   /**
+   * @brief Get the current signal quality (RSSI and BER)
+   * @param[out] rssi Received Signal Strength Indicator
+   * @param[out] ber Bit Error Rate
+   * @return OK, FAIL or TIMEOUT
+   */
+  esp_modem::command_result get_signal_quality(int& rssi, int& ber);
+
+  /**
    * @brief this modem returns the native modem instance (useful for accessing SQNGM02S specific
    * commands)
    */

@@ -182,6 +182,7 @@ bool gm02s::connect()
     return false;
   }
   ppp_started = true;
+  status = driver::CONNECTED;
 
   return true;
 }
@@ -202,6 +203,7 @@ bool gm02s::disconnect()
     esp_netif_action_disconnected(network_interface, nullptr, 0, nullptr);
     esp_netif_action_stop(network_interface, nullptr, 0, nullptr);
     ppp_started = false;
+    status = driver::DISCONNECTED;
   }
 
   return ret;
@@ -252,6 +254,11 @@ void gm02s::launchConnectedEvent()
 esp_modem::command_result gm02s::at(const std::string& cmd, std::string& out, int timeout)
 {
   return gm02sDce->at(cmd, out, timeout);
+}
+
+esp_modem::command_result gm02s::get_signal_quality(int& rssi, int& ber)
+{
+  return gm02sDce->get_signal_quality(rssi, ber);
 }
 
 esp_modem::command_result gm02s::atRaw(const std::string& cmd, std::string& out,
