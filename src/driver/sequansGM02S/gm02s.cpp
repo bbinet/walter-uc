@@ -177,7 +177,15 @@ bool gm02s::connect()
   //     ESP_LOGI(LOGTAG, "Network state: %d", state);
   // }
 
-  if(!gm02sDce->set_mode(esp_modem::modem_mode::CMUX_MODE)) {
+  bool cmux_ok = false;
+  for (int i = 0; i < 3 && !cmux_ok; i++) {
+    if (i > 0) {
+      ESP_LOGW(LOGTAG, "Retrying CMUX/PPP mode (attempt %d/3)...", i + 1);
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
+    cmux_ok = gm02sDce->set_mode(esp_modem::modem_mode::CMUX_MODE);
+  }
+  if (!cmux_ok) {
     ESP_LOGW(LOGTAG, "Failed to enter CMUX/PPP mode");
     return false;
   }
